@@ -1,0 +1,6 @@
+{
+	"appId": "com.example.app",
+	"appName": "wasm-app",
+	"webDir": "dist",
+	"bundledWebRuntime": false
+}
