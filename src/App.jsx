@@ -1,13 +1,14 @@
 import React, { useState, createRef } from 'react';
-import { Container, Button, Grid } from '@mui/material';
+import { Container, Button, Grid, Select, MenuItem } from '@mui/material';
 import defaultImage from './assets/empty-image.png';
-import { invert } from './imageProcessing';
+import { invert, borders, smooth } from './imageProcessing';
     
     
 const App = () => {
     
     const [image, setImage] = useState(defaultImage);
     const [statusCode, setStatusCode] = useState(0); // 0: no image, 1: loading, 2: ready, 3: processed
+    const [filterName, setFilterName] = useState("invert");
     const inputFile = createRef(null);
 
     const handleUploadImage = e => {
@@ -28,16 +29,37 @@ const App = () => {
     };
 
     const handleFilterImage = () => { // Btn callback
-        invert(image)
+
+        let filter = ()=>{};
+        switch(filterName){
+            case "invert":
+                filter = invert;
+                break;
+            case "borders":
+                filter = borders;
+                break;
+            case "smooth":
+                filter = smooth;
+                break;
+            default:
+                filter = invert;
+        }
+
+        filter(image)
         .then(result => {         
             setImage(result);
             setStatusCode(3);
             inputFile.current.value = ""; // Clear input file to allow user to upload the same image
         });
-    }
+    };
+
+    const handleFilterChange = e => {
+        console.log(e.target.value);
+        setFilterName(e.target.value);
+    };
 
     return(
-        <Container>   
+        <Container>
             <Grid 
                 container 
                 justifyContent="center" 
@@ -51,20 +73,32 @@ const App = () => {
                         ref={inputFile} 
                         onChange={handleUploadImage} />
             </Grid>
-
             <Grid 
                 container 
+                direction="row"
                 justifyContent="center" 
                 alignItems="center" 
                 style={{marginTop:"10px"}}>
-                    <Button 
-                        style={{width: "300px"}}
-                        size="large" 
-                        variant="contained" 
-                        onClick={handleFilterImage} 
-                        disabled={statusCode!==2}>
-                            Apply filter
-                    </Button>
+                    <Grid item xs={12} sm={6}>
+                        <Select 
+                            style={{width: "100%"}}
+                            value={filterName}
+                            onChange={handleFilterChange}>
+                            <MenuItem value="invert">Invert</MenuItem>
+                            <MenuItem value="borders">Borders</MenuItem>
+                            <MenuItem value="smooth">Smooth</MenuItem>
+                        </Select>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <Button 
+                            style={{width: "100%"}}
+                            size="large" 
+                            variant="contained" 
+                            onClick={handleFilterImage} 
+                            disabled={statusCode!==2}>
+                                Apply filter
+                        </Button>
+                    </Grid>
             </Grid>
         </Container>
     );
