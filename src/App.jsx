@@ -1,8 +1,9 @@
 import React, { useState, createRef } from 'react';
 import { Container, Button, Grid, Select, MenuItem } from '@mui/material';
 import defaultImage from './assets/empty-image.png';
-import filter from './imageProcessing';
-    
+import filter, { filtersList } from './imageProcessing';
+import { camelize } from './utils';
+
 const App = () => {
     
     const [image, setImage] = useState(defaultImage);
@@ -74,9 +75,7 @@ const App = () => {
                         style={{width: "100%", marginTop: "20px"}}
                         value={filterName}
                         onChange={handleFilterChange}>
-                        <MenuItem value="invert">Invert</MenuItem>
-                        <MenuItem value="sobel">Sobel</MenuItem>
-                        <MenuItem value="smooth">Smooth</MenuItem>
+                        {filtersList.map((filter, key) => <MenuItem key={key} value={filter}>{camelize(filter)}</MenuItem>)}
                     </Select>                        
                     <Button 
                         style={{width: "100%", marginTop: "20px"}}
