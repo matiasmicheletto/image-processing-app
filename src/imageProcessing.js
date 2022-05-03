@@ -1,3 +1,48 @@
+// Kernels
+
+const sobel3h = [
+    [-1, 0, 1],
+    [-2, 0, 2],
+    [-1, 0, 1]
+];
+const sobel3v = [
+    [-1, -2, -1],
+    [0, 0, 0],
+    [1, 2, 1]
+];
+const sobel5h = [
+    [2, 2, 4, 2, 2],
+    [1, 1, 2, 1, 1],
+    [0, 0, 0, 0, 0],
+    [-1, -1, -2, -1, -1],
+    [-2, -2, -4, -2, -2]
+];
+const sobel5v = [
+    [2, 1, 0, -1, -2],
+    [2, 1, 0, -1, -2],
+    [4, 2, 0, -2, -4],
+    [2, 1, 0, -1, -2],
+    [2, 1, 0, -1, -2]
+];
+const gse = [
+    [0, 0, 1, 2, 1, 0, 0],
+    [0, 3, 13, 22, 13, 3, 0],
+    [1, 13, 59, 97, 59, 13, 1],
+    [2, 22, 97, 159, 97, 22, 2],
+    [1, 13, 59, 97, 59, 13, 1],
+    [0, 3, 13, 22, 13, 3, 0],
+    [0, 0, 1, 2, 1, 0, 0]
+];
+const ones7 = [
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1],
+   [1, 1, 1, 1, 1, 1, 1]
+];
+
 
 /// RGB matrix operators
 const clamp = value => Math.max(0, Math.min(255, value));
@@ -29,18 +74,6 @@ const convolution = (imageData, width, height, se) => {
    return res;
 };
 
-
-const invertRGB = imageData => {
-    const res = new Uint8ClampedArray(imageData.length);
-    for(let i = 0; i < imageData.length; i+=4){
-         res[i] = 255-imageData[i];
-         res[i+1] = 255-imageData[i+1];
-         res[i+2] = 255-imageData[i+2];
-         res[i+3] = imageData[i+3];
-    }
-    return res;
-};  
-
 const gradientMag = (imageData1, imageData2) => {
     if(imageData1.length === imageData2.length){
         const res = new Uint8ClampedArray(imageData1.length);
@@ -49,85 +82,90 @@ const gradientMag = (imageData1, imageData2) => {
         return res;
     }else{
         return null;
-    }
+    }    
 };
 
 
-// Special filters
+// Image filters
 
-const smoothing = (imageData, width, height) => {
-    /*
-    const gse = [
-        [0, 0, 1, 2, 1, 0, 0],
-        [0, 3, 13, 22, 13, 3, 0],
-        [1, 13, 59, 97, 59, 13, 1],
-        [2, 22, 97, 159, 97, 22, 2],
-        [1, 13, 59, 97, 59, 13, 1],
-        [0, 3, 13, 22, 13, 3, 0],
-        [0, 0, 1, 2, 1, 0, 0]
-    ];
-    */
-   const se = [
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1],
-       [1, 1, 1, 1, 1, 1, 1]
-    ];
-    return convolution(imageData, width, height, se);
+const filters = {
+    invert: imageData => new Promise(resolve => {
+            const data = new Uint8ClampedArray(imageData.data.length);
+            for(let i = 0; i < imageData.data.length; i+=4){
+                data[i] = 255-imageData.data[i];
+                data[i+1] = 255-imageData.data[i+1];
+                data[i+2] = 255-imageData.data[i+2];
+                data[i+3] = imageData.data[i+3];
+            }
+            const res = new ImageData(imageData.width, imageData.height);
+            res.data.set(data);
+            resolve(res);
+        }),
+    smooth: imageData => new Promise(resolve => {        
+        const {width, height} = imageData;
+        const data = convolution(imageData.data, width, height, ones7);
+        const res = new ImageData(width, height);
+        res.data.set(data);
+        resolve(res);
+    }),
+    sobel: imageData => new Promise(resolve => {
+        const {width, height} = imageData;
+        const gx = convolution(imageData.data, width, height, sobel5h);
+        const gy = convolution(imageData.data, width, height, sobel5v);
+        const data = gradientMag(gx, gy);
+        const res = new ImageData(width, height);
+        res.data.set(data);
+        resolve(res);
+    }),
 };
 
-const sobel = (imageData, width, height) => {
-    const seh = [
-        [-1, 0, 1],
-        [-2, 0, 2],
-        [-1, 0, 1]
-    ];
-    const gx = convolution(imageData, width, height, seh);
-    
-    const sev = [
-        [-1, -2, -1],
-        [0, 0, 0],
-        [1, 2, 1]
-    ];
-    const gy = convolution(imageData, width, height, sev);
-    return gradientMag(gx, gy);
 
-};
 
-/// Base64 operations
+// Base64 operations
 
-const applyFilter = (base64, filterFc) => {
-    // This async function decodes de base64 image and applies a filter to the RGB matrix
-    return new Promise( (resolve, reject) => {
+const base64ToImageData = base64 => {
+    return new Promise( (resolve, reject) => {        
         const canvas = document.createElement('canvas');                
         const ctx = canvas.getContext('2d');
         const img = new Image();                
-        
         const watchdog = setTimeout(()=>{
             reject("Timeout");
         }, 5000);
-        
         img.onload = () => {
             clearTimeout(watchdog);
             const {width, height} = img;
             canvas.width = width;
             canvas.height = height;
             ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, width, height);            
-            const res = filterFc(imageData.data, width, height);
-            imageData.data.set(res);
-            ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
-            const newBase64 = canvas.toDataURL('image/png', 1.0);        
-            resolve(newBase64);
+            const imageData = ctx.getImageData(0, 0, width, height);
+            resolve(imageData);
         };
         img.src = base64;
     });
 };
 
-/// Export methods
-export const invert = base64 => applyFilter(base64, invertRGB);
-export const borders = base64 => applyFilter(base64, sobel);
-export const smooth = base64 => applyFilter(base64, smoothing);
+const imageDataToBase64 = imageData => {
+    const canvas = document.createElement('canvas');    
+    const {width, height} = imageData;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
+    return canvas.toDataURL('image/png', 1.0);
+};
+
+
+const filter = (base64, name) => new Promise(resolve => {
+    const start = Date.now();
+    base64ToImageData(base64)
+    .then(filters[name])    
+    .then(result => {
+        resolve({
+            image: imageDataToBase64(result),
+            elapsed: Date.now() - start
+        });
+    });    
+});
+
+export default filter;
+

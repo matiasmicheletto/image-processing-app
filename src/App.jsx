@@ -1,14 +1,14 @@
 import React, { useState, createRef } from 'react';
 import { Container, Button, Grid, Select, MenuItem } from '@mui/material';
 import defaultImage from './assets/empty-image.png';
-import { invert, borders, smooth } from './imageProcessing';
-    
+import filter from './imageProcessing';
     
 const App = () => {
     
     const [image, setImage] = useState(defaultImage);
     const [statusCode, setStatusCode] = useState(0); // 0: no image, 1: loading, 2: ready, 3: processed
     const [filterName, setFilterName] = useState("invert");
+    const [elapsed, setElapsed] = useState(-1);
     const inputFile = createRef(null);
 
     const handleUploadImage = e => {
@@ -26,40 +26,26 @@ const App = () => {
             setImage(defaultImage);
             setStatusCode(0);
         }
+        setElapsed(-1);
     };
 
-    const handleFilterImage = () => { // Btn callback
-
-        let filter = ()=>{};
-        switch(filterName){
-            case "invert":
-                filter = invert;
-                break;
-            case "borders":
-                filter = borders;
-                break;
-            case "smooth":
-                filter = smooth;
-                break;
-            default:
-                filter = invert;
-        }
-
-        filter(image)
+    const handleFilterImage = () => { // Btn callback        
+        filter(image, filterName)
         .then(result => {         
-            setImage(result);
+            setImage(result.image);
+            setElapsed(result.elapsed);
             setStatusCode(3);
             inputFile.current.value = ""; // Clear input file to allow user to upload the same image
         });
     };
 
-    const handleFilterChange = e => {
-        console.log(e.target.value);
+    const handleFilterChange = e => {        
         setFilterName(e.target.value);
+        setStatusCode(2);
     };
 
     return(
-        <Container>
+        <Container style={{maxWidth: "600px", margin: "0 auto"}}>
             <Grid 
                 container 
                 justifyContent="center" 
@@ -72,33 +58,34 @@ const App = () => {
                         accept="image/*" 
                         ref={inputFile} 
                         onChange={handleUploadImage} />
+                    {elapsed > -1 && 
+                        <span style={{textAlign:"right", width:"100%"}}>
+                            Processing time: {elapsed} ms
+                        </span>
+                    }
             </Grid>
             <Grid 
                 container 
-                direction="row"
+                direction="column"
                 justifyContent="center" 
                 alignItems="center" 
                 style={{marginTop:"10px"}}>
-                    <Grid item xs={12} sm={6}>
-                        <Select 
-                            style={{width: "100%"}}
-                            value={filterName}
-                            onChange={handleFilterChange}>
-                            <MenuItem value="invert">Invert</MenuItem>
-                            <MenuItem value="borders">Borders</MenuItem>
-                            <MenuItem value="smooth">Smooth</MenuItem>
-                        </Select>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <Button 
-                            style={{width: "100%"}}
-                            size="large" 
-                            variant="contained" 
-                            onClick={handleFilterImage} 
-                            disabled={statusCode!==2}>
-                                Apply filter
-                        </Button>
-                    </Grid>
+                    <Select 
+                        style={{width: "100%", marginTop: "20px"}}
+                        value={filterName}
+                        onChange={handleFilterChange}>
+                        <MenuItem value="invert">Invert</MenuItem>
+                        <MenuItem value="sobel">Sobel</MenuItem>
+                        <MenuItem value="smooth">Smooth</MenuItem>
+                    </Select>                        
+                    <Button 
+                        style={{width: "100%", marginTop: "20px"}}
+                        size="large" 
+                        variant="contained" 
+                        onClick={handleFilterImage} 
+                        disabled={statusCode!==2}>
+                            Apply filter
+                    </Button>
             </Grid>
         </Container>
     );
