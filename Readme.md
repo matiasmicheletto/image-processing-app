@@ -1,6 +1,8 @@
 # Image processing app
-This a simple hybrid app for Android that implements image filters (Sobel and Gaussian blur) in WebAssembly. The goal is to test the performance of convolutional algorithms implemented in JS and WASM.  
+This a simple hybrid app for Android that implements image filters (Sobel and Gaussian blur) in WebAssembly. The goal is to test the performance of computationally intensive algorithms implemented in JS and WASM.  
 The web app is implemented using React and Material UI. The native platform APIs are provided by CapacitorJS. The WASM binaries are compiled with Emscripten.  
+
+![Screenshots](doc/screenshots.png)
 
 # Getting started
 
