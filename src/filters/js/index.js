@@ -42,25 +42,35 @@ const gradientMag = (input1, input2) => {
 };
 
 // Filter equations
-export const invert = (data, width, height) => new Promise(resolve => {            
-    const res = new Uint8ClampedArray(data.length);
-    for(let i = 0; i < data.length; i+=4){
-        res[i] = 255-data[i];
-        res[i+1] = 255-data[i+1];
-        res[i+2] = 255-data[i+2];
-        res[i+3] = data[i+3];
-    }
-    resolve(res);
-});
+export const invert = {
+    name: 'Invert colors',
+    apply: (data, width, height) => new Promise(resolve => {            
+        const res = new Uint8ClampedArray(data.length);
+        for(let i = 0; i < data.length; i+=4){
+            res[i] = 255-data[i];
+            res[i+1] = 255-data[i+1];
+            res[i+2] = 255-data[i+2];
+            res[i+3] = data[i+3];
+        }
+        resolve(res);
+    })
+};
 
-export const blur = (data, width, height) => new Promise(resolve => {                
-    const res = convolution(data, width, height, ones);
-    resolve(res);
-});
+export const blur = {
+    name: 'Blur',
+    apply: (data, width, height) => new Promise(resolve => {                
+        const res = convolution(data, width, height, ones);
+        resolve(res);
+    })
+};
 
-export const sobel = (data, width, height) => new Promise(resolve => {        
-    const gx = convolution(data, width, height, sobelH);
-    const gy = convolution(data, width, height, sobelV);
-    const res = gradientMag(gx, gy);
-    resolve(res);
-});
+export const sobel = {
+    name: 'Border detection',
+    apply: (data, width, height) => new Promise(resolve => {        
+        const gx = convolution(data, width, height, sobelH);
+        const gy = convolution(data, width, height, sobelV);
+        const res = gradientMag(gx, gy);
+        resolve(res);
+    })
+};
+

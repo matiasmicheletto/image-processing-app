@@ -9,7 +9,7 @@ const filters = {
 const filterWrapper = (imageData, filterType, filterName) => new Promise((resolve, reject) => {
     const {data, width, height} = imageData;
     if(filterName in filters[filterType]){
-        filters[filterType][filterName](data, width, height)
+        filters[filterType][filterName].apply(data, width, height)
         .then(resData => {
             const resImage = new ImageData(width, height);
             resImage.data.set(resData);
@@ -66,4 +66,4 @@ const filter = (base64, type, name) => new Promise(resolve => {
 });
 
 export default filter;
-export const filtersList = ["invert", "sobel", "blur"];
+export const filtersList = Object.keys(jsFilters).map(key => ({name: jsFilters[key].name, key}));

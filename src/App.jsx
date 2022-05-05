@@ -1,13 +1,13 @@
 import React, { useState, createRef } from 'react';
-import { Container, Button, Grid, Select, MenuItem } from '@mui/material';
+import { Container, Button, Grid, Select, MenuItem, Typography } from '@mui/material';
 import defaultImage from './assets/empty-image.png';
 import filter, { filtersList } from './imageProcessing';
-import { camelize } from './utils';
 
 const App = () => {
     
     const [image, setImage] = useState(defaultImage);
     const [statusCode, setStatusCode] = useState(0); // 0: no image, 1: loading, 2: ready, 3: processed
+    const status = ["Load image","Loading...","Image ready","Filter applied"];
     const [filterType, setFilterType] = useState('js');
     const [filterName, setFilterName] = useState('invert');
     const [elapsed, setElapsed] = useState(-1);
@@ -58,6 +58,7 @@ const App = () => {
                 justifyContent="center" 
                 alignItems="center" 
                 onClick={() => inputFile.current.click()}>
+                    <Typography variant="h5">{status[statusCode]}</Typography>
                     <img src={image} style={{width:"100%", maxWidth:"600px"}} />
                     <input 
                         style={{display:"none"}} 
@@ -67,7 +68,7 @@ const App = () => {
                         onChange={handleUploadImage} />
                     {elapsed > -1 && 
                         <span style={{textAlign:"right", width:"100%"}}>
-                            Processing time: {elapsed} ms
+                            <Typography>Processing time: {elapsed} ms</Typography>
                         </span>
                     }
             </Grid>
@@ -88,7 +89,7 @@ const App = () => {
                         style={{width: "100%", marginTop: "20px"}}
                         value={filterName}
                         onChange={handleFilterNameChange}>
-                        {filtersList.map((filter, key) => <MenuItem key={key} value={filter}>{camelize(filter)}</MenuItem>)}
+                        {filtersList.map(filter => <MenuItem key={filter.key} value={filter.key}>{filter.name}</MenuItem>)}
                     </Select>                        
                     <Button 
                         style={{width: "100%", marginTop: "20px"}}

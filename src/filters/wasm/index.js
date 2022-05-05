@@ -51,6 +51,18 @@ const allocAndRun = (data, width, height, filter) => new Promise((resolve, rejec
     }
 });
 
-export const invert = (data, width, height) => allocAndRun(data, width, height, wasmInstance.invert);
-export const blur = (data, width, height) => allocAndRun(data, width, height, wasmInstance.blur);
-export const sobel = (data, width, height) => allocAndRun(data, width, height, wasmInstance.sobel);
+export const invert = {
+    name: 'Invert colors',
+    apply: (data, width, height) => allocAndRun(data, width, height, wasmInstance.invert)
+};
+
+export const blur = {
+    name: 'Blur',
+    apply: (data, width, height) => allocAndRun(data, width, height, wasmInstance.blur)
+};
+
+export const sobel = {
+    name: 'Border detection',
+    apply: (data, width, height) => allocAndRun(data, width, height, wasmInstance.sobel)
+}
+

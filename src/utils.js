@@ -1,1 +1,0 @@
-export const camelize = str => str.replace(/(?:^\w|[A-Z]|\b\w)/g, letter => letter.toUpperCase()).replace(/\s+/g, '');
