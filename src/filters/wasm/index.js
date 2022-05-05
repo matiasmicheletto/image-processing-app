@@ -41,7 +41,11 @@ const allocAndRun = (data, width, height, filter) => new Promise((resolve, rejec
             };
             filter(ptr, width, height);
         }
-        wasmInstance.alloc(data.length);
+        if(data.length < 8388608){
+            console.log("Requesting memory:", data.length);
+            wasmInstance.alloc(data.length);
+        }else
+            reject("Image too large! - "+data.length);
     }else{
         reject('Wasm not ready');
     }

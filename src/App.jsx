@@ -8,7 +8,8 @@ const App = () => {
     
     const [image, setImage] = useState(defaultImage);
     const [statusCode, setStatusCode] = useState(0); // 0: no image, 1: loading, 2: ready, 3: processed
-    const [filterName, setFilterName] = useState("invert");
+    const [filterType, setFilterType] = useState('js');
+    const [filterName, setFilterName] = useState('invert');
     const [elapsed, setElapsed] = useState(-1);
     const inputFile = createRef(null);
 
@@ -31,7 +32,7 @@ const App = () => {
     };
 
     const handleFilterImage = () => { // Btn callback        
-        filter(image, filterName)
+        filter(image, filterType, filterName)
         .then(result => {         
             setImage(result.image);
             setElapsed(result.elapsed);
@@ -40,7 +41,12 @@ const App = () => {
         });
     };
 
-    const handleFilterChange = e => {        
+    const handleFilterTypeChange = e => {
+        setFilterType(e.target.value);
+        setStatusCode(2);
+    }
+
+    const handleFilterNameChange = e => {        
         setFilterName(e.target.value);
         setStatusCode(2);
     };
@@ -73,8 +79,15 @@ const App = () => {
                 style={{marginTop:"10px"}}>
                     <Select 
                         style={{width: "100%", marginTop: "20px"}}
+                        value={filterType}
+                        onChange={handleFilterTypeChange}>
+                        <MenuItem value="js">JS</MenuItem>
+                        <MenuItem value="wasm">WASM</MenuItem>
+                    </Select>                        
+                    <Select 
+                        style={{width: "100%", marginTop: "20px"}}
                         value={filterName}
-                        onChange={handleFilterChange}>
+                        onChange={handleFilterNameChange}>
                         {filtersList.map((filter, key) => <MenuItem key={key} value={filter}>{camelize(filter)}</MenuItem>)}
                     </Select>                        
                     <Button 

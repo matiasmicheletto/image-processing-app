@@ -1,11 +1,15 @@
-//import * as filters from './filters/js';
-import * as filters from './filters/wasm';
+import * as jsFilters from './filters/js';
+import * as wasmFilters from './filters/wasm';
 
+const filters = {
+    js: jsFilters,
+    wasm: wasmFilters
+};
 
-const filterWrapper = (imageData, filterName) => new Promise((resolve, reject) => {
+const filterWrapper = (imageData, filterType, filterName) => new Promise((resolve, reject) => {
     const {data, width, height} = imageData;
-    if(filterName in filters){
-        filters[filterName](data, width, height)
+    if(filterName in filters[filterType]){
+        filters[filterType][filterName](data, width, height)
         .then(resData => {
             const resImage = new ImageData(width, height);
             resImage.data.set(resData);
@@ -49,10 +53,10 @@ const imageDataToBase64 = imageData => {
     return canvas.toDataURL('image/png', 1.0);
 };
 
-const filter = (base64, name) => new Promise(resolve => {
+const filter = (base64, type, name) => new Promise(resolve => {
     const start = Date.now();
     base64ToImageData(base64)
-    .then(data => filterWrapper(data, name))    
+    .then(data => filterWrapper(data, type, name))    
     .then(result => {
         resolve({
             image: imageDataToBase64(result),
@@ -62,4 +66,4 @@ const filter = (base64, name) => new Promise(resolve => {
 });
 
 export default filter;
-export const filtersList = Object.keys(filters);
+export const filtersList = ["invert", "sobel", "blur"];
