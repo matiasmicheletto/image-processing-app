@@ -1,5 +1,5 @@
-import * as filters from './filters/js';
-//import * as filters from './filters/wasm';
+//import * as filters from './filters/js';
+import * as filters from './filters/wasm';
 
 
 const filterWrapper = (imageData, filterName) => new Promise((resolve, reject) => {

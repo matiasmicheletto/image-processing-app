@@ -1,40 +1,40 @@
-import {ones7, sobel5h, sobel5v} from './kernels.js';
+import {ones, sobelH, sobelV} from './kernels.js';
 
 /// RGB matrix operators
 const clamp = value => Math.max(0, Math.min(255, value));
 
-const convolution = (matrixData, width, height, se) => {
-    const res = new Uint8ClampedArray(matrixData.length);
-    const sel = se.length; // Structuring element side length (assuming square)
-    const n = Math.floor(sel/2); // Structuring element center
+const convolution = (input, width, height, kernel) => {
+    const res = new Uint8ClampedArray(input.length);
+    const kl = kernel.length; // Structuring element side length (assuming square)
+    const n = Math.floor(kl/2); // Structuring element center
     
     for(let row = n; row < height - n; row++) {
         for(let col = n; col < width - n; col++) {
             const pindex = (row*width + col)*4;
             let acc = [0,0,0];
-            for(let r2 = 0; r2 < sel; r2++) {
-                for(let c2 = 0; c2 < sel; c2++) {
+            for(let r2 = 0; r2 < kl; r2++) {
+                for(let c2 = 0; c2 < kl; c2++) {
                     const nindex = ((row-n+r2)*width + (col-n+c2))*4;
-                    //const y = 0.2126*matrixData[nindex] + 0.7152*matrixData[nindex+1] + 0.0722*matrixData[nindex+2];
-                    acc[0] += matrixData[nindex]*se[r2][c2];
-                    acc[1] += matrixData[nindex+1]*se[r2][c2];
-                    acc[2] += matrixData[nindex+2]*se[r2][c2];
+                    //const y = 0.2126*input[nindex] + 0.7152*input[nindex+1] + 0.0722*input[nindex+2];
+                    acc[0] += input[nindex]*kernel[r2][c2];
+                    acc[1] += input[nindex+1]*kernel[r2][c2];
+                    acc[2] += input[nindex+2]*kernel[r2][c2];
                 }
             }
-            res[pindex] = clamp(acc[0]/sel/sel);
-            res[pindex+1] = clamp(acc[1]/sel/sel);
-            res[pindex+2] = clamp(acc[2]/sel/sel);
+            res[pindex] = clamp(acc[0]/kl/kl);
+            res[pindex+1] = clamp(acc[1]/kl/kl);
+            res[pindex+2] = clamp(acc[2]/kl/kl);
             res[pindex+3] = 255;
         }
     }
    return res;
 };
 
-const gradientMag = (imageData1, imageData2) => {
-    if(imageData1.length === imageData2.length){
-        const res = new Uint8ClampedArray(imageData1.length);
-        for(let i = 0; i < imageData1.length; i++)
-            res[i] = clamp(Math.sqrt(imageData1[i]*imageData1[i] + imageData2[i]*imageData2[i]));
+const gradientMag = (input1, input2) => {
+    if(input1.length === input2.length){
+        const res = new Uint8ClampedArray(input1.length);
+        for(let i = 0; i < input1.length; i++)
+            res[i] = clamp(Math.sqrt(input1[i]*input1[i] + input2[i]*input2[i]));
         return res;
     }else{
         return null;
@@ -53,14 +53,14 @@ export const invert = (data, width, height) => new Promise(resolve => {
     resolve(res);
 });
 
-export const smooth = (data, width, height) => new Promise(resolve => {                
-    const res = convolution(data, width, height, ones7);
+export const blur = (data, width, height) => new Promise(resolve => {                
+    const res = convolution(data, width, height, ones);
     resolve(res);
 });
 
 export const sobel = (data, width, height) => new Promise(resolve => {        
-    const gx = convolution(data, width, height, sobel5h);
-    const gy = convolution(data, width, height, sobel5v);
+    const gx = convolution(data, width, height, sobelH);
+    const gy = convolution(data, width, height, sobelV);
     const res = gradientMag(gx, gy);
     resolve(res);
 });

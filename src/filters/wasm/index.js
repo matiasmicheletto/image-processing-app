@@ -1,40 +1,52 @@
+let allocCallback = null;
+let resultCallback = null;
+
 const imports = {
     env: {
-        // This callback will be called from the C++ side when the wasm module returns the results
-        onResults: (offset, length) => { 
-            const res = new Uint8ClampedArray(length);
-            const view = new Uint8Array(memory.buffer, offset, length);
-            for(let i = 0; i < length; i++)
-                res[i] = view[i];
-            window.dispatchEvent(new CustomEvent('onResult', {data: res}));
+        onAlloc: ptr => {
+            console.log("Memory allocated at", ptr);
+            allocCallback(ptr);
+            allocCallback = null;
+        },
+        onResults: ptr => { 
+            console.log("Results ready");
+            resultCallback(ptr);
+            resultCallback = null;
         }
     } 
 };
 
 let wasmInstance;
-fetch('wasm/main.wasm').then(response => {
+let ready = false;
+fetch('wasm/filters.wasm').then(response => {
     response.arrayBuffer().then(bytes => {                   
         WebAssembly.instantiate(bytes, imports)
         .then(module => {                    
             wasmInstance = module.instance.exports;
-            console.log(wasmInstance);
+            ready = true;
         })
     });
 });
 
-
-
-export const invert = (data, width, height) => new Promise(resolve => {            
-    wasmInstance.invert(data, width, height);
-    window.addEventListener('onResult', e => {
-        resolve(e.data);
-    });
+const allocAndRun = (data, width, height, filter) => new Promise((resolve, reject) => {
+    // Request memory allocation on the WASM side, then run filter
+    if(ready){
+        allocCallback = ptr => {
+            const mem = new Uint8Array(wasmInstance.memory.buffer, ptr, data.length);
+            mem.set(data);
+            resultCallback = ptr2 => {
+                var buffer = new Uint8Array(wasmInstance.memory.buffer, ptr2, data.length);
+                wasmInstance.mfree(ptr2);
+                resolve(Array.from(buffer));
+            };
+            filter(ptr, width, height);
+        }
+        wasmInstance.alloc(data.length);
+    }else{
+        reject('Wasm not ready');
+    }
 });
 
-export const smooth = (data, width, height) => new Promise(resolve => {                
-    
-});
-
-export const sobel = (data, width, height) => new Promise(resolve => {        
-    
-});
+export const invert = (data, width, height) => allocAndRun(data, width, height, wasmInstance.invert);
+export const blur = (data, width, height) => allocAndRun(data, width, height, wasmInstance.blur);
+export const sobel = (data, width, height) => allocAndRun(data, width, height, wasmInstance.sobel);
